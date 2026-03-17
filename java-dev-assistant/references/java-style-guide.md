@@ -1,32 +1,32 @@
-# Java Style Guide
+# Java 代码风格指南
 
-## General Principles
+## 通用原则
 
-1. Follow existing project conventions
-2. Use meaningful names
-3. Keep methods small and focused
-4. Prefer immutability
-5. Document public APIs
+1. 遵循现有项目规范
+2. 使用有意义的命名
+3. 保持方法小而专注
+4. 优先使用不可变性
+5. 文档化公共 API
 
-## Naming Conventions
+## 命名规范
 
-| Element | Convention | Example |
-|---------|------------|---------|
-| Classes | PascalCase | `UserService`, `OrderProcessor` |
-| Methods | camelCase | `getUserById()`, `processOrder()` |
-| Variables | camelCase | `userCount`, `orderList` |
-| Constants | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
-| Packages | lowercase | `com.company.service` |
+| 元素 | 规范 | 示例 |
+|------|------|------|
+| 类名 | PascalCase，名词 | `UserService`, `OrderProcessor` |
+| 方法名 | camelCase，动词 | `getUserById()`, `processOrder()` |
+| 变量名 | camelCase | `userCount`, `orderList` |
+| 常量名 | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
+| 包名 | 全小写 | `com.company.service` |
 
-## Code Formatting
+## 代码格式
 
-### Indentation
-- Use 4 spaces (no tabs)
-- Continuation indent: 8 spaces
+### 缩进
+- 使用 4 个空格（不用 tab）
+- 续行缩进：8 个空格
 
-### Braces
-- Opening brace on same line
-- Closing brace on new line
+### 大括号
+- 左大括号在同一行
+- 右大括号在新行
 
 ```java
 if (condition) {
@@ -36,15 +36,15 @@ if (condition) {
 }
 ```
 
-### Line Length
-- Maximum 120 characters
-- Break long lines at logical points
+### 行长度
+- 最大 120 字符
+- 在逻辑点处断行长行
 
-## Imports
+## 导入
 
-- No wildcard imports
-- Group imports: java, javax, org, com
-- Static imports last
+- 不使用通配符导入
+- 分组导入：java、javax、org、com
+- 静态导入放最后
 
 ```java
 import java.util.List;
@@ -55,31 +55,31 @@ import org.springframework.stereotype.Service;
 import com.company.project.model.User;
 ```
 
-## Documentation
+## 文档
 
 ### Javadoc
 
 ```java
 /**
- * Brief description of the method.
+ * 方法的简要描述。
  *
- * @param paramName description of parameter
- * @return description of return value
- * @throws ExceptionType when this exception occurs
+ * @param paramName 参数描述
+ * @return 返回值描述
+ * @throws ExceptionType 何时抛出此异常
  */
 ```
 
-### TODO Comments
+### TODO 注释
 
 ```java
-// TODO: Brief description of what needs to be done
-// TODO(author): Description with assignee
+// TODO: 需要做什么的简要描述
+// TODO(作者): 带指派人的描述
 ```
 
-## Best Practices
+## 最佳实践
 
-1. **Null Safety**: Use Optional instead of null
-2. **Collections**: Use interfaces (List, Set, Map) for declarations
-3. **Streams**: Prefer Stream API for collection operations
-4. **Exceptions**: Use checked exceptions for recoverable errors
-5. **Logging**: Use SLF4J with appropriate log levels
+1. **空安全**：使用 Optional 代替 null
+2. **集合**：声明时使用接口（List、Set、Map）
+3. **流**：优先使用 Stream API 处理集合操作
+4. **异常**：可恢复的错误使用受检异常
+5. **日志**：使用 SLF4J，选择合适的日志级别
