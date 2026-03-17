@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Analyze git diff to identify affected Java components.
-Outputs JSON with changed files, classes, and methods.
+分析 git diff 以识别受影响的 Java 组件。
+输出 JSON 格式的变更文件、类和 method 信息。
 """
 
 import subprocess
@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 def get_git_diff():
-    """Get the git diff of staged changes."""
+    """获取已暂存变更的 git diff。"""
     try:
         result = subprocess.run(
             ['git', 'diff', '--cached', '--name-only'],
@@ -26,7 +26,7 @@ def get_git_diff():
 
 
 def get_diff_content(file_path):
-    """Get diff content for a specific file."""
+    """获取指定文件的 diff 内容。"""
     try:
         result = subprocess.run(
             ['git', 'diff', '--cached', file_path],
@@ -40,9 +40,9 @@ def get_diff_content(file_path):
 
 
 def extract_java_methods(diff_content):
-    """Extract method signatures from Java diff."""
+    """从 Java diff 中提取方法签名。"""
     methods = []
-    # Pattern to match method declarations in diff
+    # 匹配 diff 中的方法声明模式
     method_pattern = r'^[+].*(?:public|private|protected|static|\s)+[\w\<\>\[\]]+\s+(\w+)\s*\([^\)]*\)'
     
     for line in diff_content.split('\n'):
@@ -54,24 +54,24 @@ def extract_java_methods(diff_content):
 
 
 def analyze_changes():
-    """Main analysis function."""
+    """主分析函数。"""
     changed_files = get_git_diff()
     
     if not changed_files:
         return {
-            "error": "No staged changes found. Stage your changes with 'git add' first."
+            "error": "未找到已暂存的变更。请先用 'git add' 暂存您的变更。"
         }
     
     java_files = [f for f in changed_files if f.endswith('.java')]
     
     result = {
-        "total_files": len(changed_files),
-        "java_files": [],
-        "other_files": [f for f in changed_files if not f.endswith('.java')],
-        "summary": {
-            "classes_modified": [],
-            "methods_added": [],
-            "methods_modified": []
+        "变更文件总数": len(changed_files),
+        "Java文件": [],
+        "其他文件": [f for f in changed_files if not f.endswith('.java')],
+        "摘要": {
+            "修改的类": [],
+            "新增的方法": [],
+            "修改的方法": []
         }
     }
     
@@ -82,21 +82,21 @@ def analyze_changes():
         class_name = Path(file_path).stem
         
         file_info = {
-            "path": file_path,
-            "class_name": class_name,
-            "methods_affected": methods
+            "路径": file_path,
+            "类名": class_name,
+            "受影响的方法": methods
         }
-        result["java_files"].append(file_info)
-        result["summary"]["classes_modified"].append(class_name)
-        result["summary"]["methods_modified"].extend(methods)
+        result["Java文件"].append(file_info)
+        result["摘要"]["修改的类"].append(class_name)
+        result["摘要"]["修改的方法"].extend(methods)
     
-    # Remove duplicates
-    result["summary"]["classes_modified"] = list(set(result["summary"]["classes_modified"]))
-    result["summary"]["methods_modified"] = list(set(result["summary"]["methods_modified"]))
+    # 去重
+    result["摘要"]["修改的类"] = list(set(result["摘要"]["修改的类"]))
+    result["摘要"]["修改的方法"] = list(set(result["摘要"]["修改的方法"]))
     
     return result
 
 
 if __name__ == "__main__":
     analysis = analyze_changes()
-    print(json.dumps(analysis, indent=2))
+    print(json.dumps(analysis, indent=2, ensure_ascii=False))
