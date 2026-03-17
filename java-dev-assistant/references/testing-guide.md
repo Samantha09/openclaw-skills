@@ -1,57 +1,57 @@
-# Java Testing Guide
+# 测试指南
 
-## Testing Framework
+## 测试框架
 
-Use JUnit 5 (Jupiter) for unit tests.
+使用 JUnit 5 (Jupiter) 进行单元测试。
 
-## Test Structure
+## 测试结构
 
 ```java
 @Test
-@DisplayName("Descriptive test name")
-void methodName_scenario_expectedResult() {
-    // Arrange - Set up test data and mocks
+@DisplayName("描述性测试名称")
+void 方法名_场景_预期结果() {
+    // 准备 - 设置测试数据和 Mock
     
-    // Act - Execute the method under test
+    // 执行 - 执行被测试的方法
     
-    // Assert - Verify the results
+    // 验证 - 验证结果
 }
 ```
 
-## Test Naming Convention
+## 测试命名规范
 
-Format: `methodName_scenario_expectedResult`
+格式：`方法名_场景_预期结果`
 
-Examples:
+示例：
 - `calculatePrice_validInput_returnsCorrectTotal`
 - `processOrder_nullOrder_throwsIllegalArgumentException`
 - `getUser_nonExistentUser_returnsEmptyOptional`
 
-## Test Categories
+## 测试类别
 
-### 1. Positive Tests
-- Valid inputs
-- Normal operation flow
-- Expected successful outcomes
+### 1. 正向测试
+- 有效输入
+- 正常操作流程
+- 预期成功结果
 
-### 2. Edge Cases
-- Null inputs
-- Empty collections
-- Boundary values (Integer.MAX_VALUE, empty strings)
+### 2. 边界情况
+- Null 输入
+- 空集合
+- 边界值（Integer.MAX_VALUE、空字符串）
 
-### 3. Exception Tests
-- Invalid inputs
-- Error conditions
-- Expected exceptions
+### 3. 异常测试
+- 无效输入
+- 错误条件
+- 预期异常
 
-### 4. Integration Points
-- External service calls
-- Database interactions
-- File I/O operations
+### 4. 集成点
+- 外部服务调用
+- 数据库交互
+- 文件 I/O 操作
 
-## Mocking
+## Mock
 
-Use Mockito for mocking dependencies:
+使用 Mockito 进行依赖 Mock：
 
 ```java
 @Mock
@@ -73,9 +73,9 @@ void findUser_existingUser_returnsUser() {
 }
 ```
 
-## Assertions
+## 断言
 
-Use AssertJ for fluent assertions:
+使用 AssertJ 进行流式断言：
 
 ```java
 import static org.assertj.core.api.Assertions.*;
@@ -90,8 +90,8 @@ assertThatThrownBy(() -> service.process(null))
     .hasMessageContaining("input cannot be null");
 ```
 
-## Coverage Goals
+## 覆盖率目标
 
-- Line coverage: >= 80%
-- Branch coverage: >= 70%
-- Critical paths: 100%
+- 行覆盖率：>= 80%
+- 分支覆盖率：>= 70%
+- 关键路径：100%
