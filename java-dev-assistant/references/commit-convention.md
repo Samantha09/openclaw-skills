@@ -1,60 +1,60 @@
-# Conventional Commits Specification
+# 提交规范
 
-## Commit Message Format
+## 提交信息格式
 
 ```
-<type>[optional scope]: <description>
+<类型>[可选 范围]: <描述>
 
-[optional body]
+[可选 正文]
 
-[optional footer(s)]
+[可选 页脚]
 ```
 
-## Types
+## 类型
 
-| Type | Description |
-|------|-------------|
-| **feat** | A new feature |
-| **fix** | A bug fix |
-| **docs** | Documentation only changes |
-| **style** | Changes that don't affect code meaning (formatting, semicolons, etc) |
-| **refactor** | Code change that neither fixes a bug nor adds a feature |
-| **perf** | Performance improvement |
-| **test** | Adding or correcting tests |
-| **chore** | Changes to build process or auxiliary tools |
+| 类型 | 说明 |
+|------|------|
+| **feat** | 新功能 |
+| **fix** | Bug 修复 |
+| **docs** | 仅文档变更 |
+| **style** | 不影响代码含义的变更（格式、分号等）|
+| **refactor** | 既不修复 Bug 也不添加功能的代码变更 |
+| **perf** | 性能优化 |
+| **test** | 添加或修正测试 |
+| **chore** | 构建过程或辅助工具的变更 |
 
-## Examples
+## 示例
 
-### Feature
+### 功能提交
 ```
-feat(user): add user authentication
+feat(用户): 添加用户认证
 
-Implement JWT-based authentication for user login.
-Supports access token and refresh token.
-```
-
-### Bug Fix
-```
-fix(api): resolve null pointer exception in user service
-
-Check for null before accessing user object.
-Add null-safe operations.
-
-Closes #123
+实现基于 JWT 的用户登录认证。
+支持访问令牌和刷新令牌。
 ```
 
-### Breaking Change
+### Bug 修复
 ```
-feat(api): redesign response format
+fix(API): 修复用户服务中的空指针异常
 
-BREAKING CHANGE: Response format changed from XML to JSON.
-Migration guide: docs/migration-v2.md
+在访问用户对象前检查 null。
+添加空安全操作。
+
+修复 #123
 ```
 
-## Best Practices
+### 破坏性变更
+```
+feat(API): 重新设计响应格式
 
-1. Use present tense ("add feature" not "added feature")
-2. Use imperative mood ("move cursor to..." not "moves cursor to...")
-3. Don't capitalize first letter
-4. No period at the end
-5. Keep description under 72 characters
+BREAKING CHANGE: 响应格式从 XML 改为 JSON。
+迁移指南: docs/migration-v2.md
+```
+
+## 最佳实践
+
+1. 使用现在时（"添加功能" 而非 "添加了功能"）
+2. 使用祈使语气（"移动光标到..." 而非 "移动光标到..."）
+3. 首字母不大写
+4. 结尾不加句号
+5. 描述保持在 72 字符以内
