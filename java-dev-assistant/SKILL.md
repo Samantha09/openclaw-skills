@@ -100,3 +100,56 @@ description: |
 - 并发处理：线程池使用 ThreadPoolExecutor 创建，不要直接用 Executors
 - 异常日志：使用 SLF4J，异常信息要包含案发现场和堆栈
 - MySQL：表必备 id/create_time/update_time，禁用外键，不用 SELECT *
+
+## 更新技能
+
+### 从 GitHub 拉取最新版本
+
+**方法 1：直接下载（推荐）**
+```bash
+# 进入 skills 目录
+cd ~/.openclaw/workspace/skills
+
+# 删除旧版本
+rm -rf java-dev-assistant
+
+# 下载最新版本
+curl -L https://github.com/Samantha09/openclaw-skills/archive/refs/heads/main.zip -o skills.zip
+unzip skills.zip
+mv openclaw-skills-main/java-dev-assistant .
+rm -rf openclaw-skills-main skills.zip
+```
+
+**方法 2：使用 Git 克隆**
+```bash
+# 进入 skills 目录
+cd ~/.openclaw/workspace/skills
+
+# 如果已克隆，直接拉取更新
+if [ -d "openclaw-skills" ]; then
+    cd openclaw-skills
+    git pull origin main
+else
+    # 首次克隆
+    git clone https://github.com/Samantha09/openclaw-skills.git
+fi
+
+# 同步到本地 skills 目录
+cp -r openclaw-skills/java-dev-assistant .
+```
+
+**方法 3：手动更新**
+1. 访问 https://github.com/Samantha09/openclaw-skills/tree/main/java-dev-assistant
+2. 下载每个文件的最新内容
+3. 替换 `~/.openclaw/workspace/skills/java-dev-assistant/` 中的对应文件
+
+### 验证更新
+
+更新后检查技能版本：
+```bash
+# 查看 SKILL.md 的修改日期
+ls -la ~/.openclaw/workspace/skills/java-dev-assistant/SKILL.md
+
+# 或者查看文件内容中的版本信息
+head -5 ~/.openclaw/workspace/skills/java-dev-assistant/SKILL.md
+```
