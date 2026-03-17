@@ -86,6 +86,17 @@ Use scripts in `scripts/` directory for common operations:
 ## References
 
 See `references/` for:
+- `alibaba-java-manual.md` - **阿里巴巴 Java 开发手册（嵩山版）** - 命名规范、编码规约、异常处理、并发、数据库等
 - `commit-convention.md` - Commit message format details
 - `testing-guide.md` - Testing best practices
 - `java-style-guide.md` - Project coding conventions
+
+### Coding Standards
+
+开发 Java 代码时，请遵循 **阿里巴巴 Java 开发手册** 的规约：
+- 命名风格：类名 UpperCamelCase，方法/变量 lowerCamelCase，常量 UPPER_SNAKE_CASE
+- OOP 规约：POJO 类属性使用包装类型，重写 equals 必须重写 hashCode
+- 集合处理：不要在 foreach 循环里进行 remove/add 操作
+- 并发处理：线程池使用 ThreadPoolExecutor 创建，不要直接用 Executors
+- 异常日志：使用 SLF4J，异常信息要包含案发现场和堆栈
+- MySQL：表必备 id/create_time/update_time，禁用外键，不用 SELECT *
