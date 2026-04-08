@@ -13,23 +13,37 @@ description: |
 ## 能力
 
 1. **代码质量评估**
-   - 检查代码是否符合项目规范和阿里巴巴 Java 开发手册
+   - 检查代码是否符合阿里巴巴 Java 开发手册和项目规范
    - 评估可读性、可维护性和扩展性
    - 识别过度复杂、重复或死代码
 
-2. **问题发现**
-   - 发现常见的 Java 反模式和潜在 Bug
-   - 检查空安全、并发、异常处理和资源释放
-   - 识别性能瓶颈和安全隐患
+2. **Spring Boot 审查**
+   - 检查 Controller/Service/Repository 分层是否正确
+   - 审查依赖注入方式（构造器注入 vs 字段注入）
+   - 检查事务管理（@Transactional 使用是否正确）
+   - 配置管理是否规范
 
-3. **审查报告生成**
-   - 按严重程度分类问题（阻塞 / 警告 / 建议）
-   - 输出结构化的 Markdown / JSON 审查报告
+3. **并发安全审查**
+   - 检查线程池创建方式（禁用 Executors，必须用 ThreadPoolExecutor）
+   - 审查 CompletableFuture 异常处理
+   - 识别竞态条件和锁顺序问题
+   - Java 21+ Virtual Thread 使用审查
+
+4. **数据库与 ORM 审查**
+   - 检查 SQL 注入风险、N+1 查询
+   - 审查 MyBatis/JPA 映射和查询效率
+   - 索引使用和分页查询是否合理
+
+5. **日志审查**
+   - 是否使用 SLF4J 而非 Log4j/Logback 直接调用
+   - 日志级别是否恰当
+   - 异常日志是否包含案发现场和堆栈
+   - 敏感信息是否脱敏
+
+6. **审查报告生成**
+   - 按严重程度分类问题（BLOCKER / WARNING / SUGGESTION）
+   - 输出结构化 Markdown 审查报告
    - 生成可直接用于 PR/MR 的评论
-
-4. **改进建议**
-   - 针对每个问题给出具体、可执行的修改建议
-   - 提供重构思路和最佳实践参考
 
 ## 工作流程
 
@@ -50,6 +64,9 @@ description: |
 - **可维护性**：方法长度、圈复杂度、硬编码、重复代码
 - **异步/并发**：线程池配置、CompletableFuture 使用、竞态条件、死锁
 - **可扩展性**：耦合度、是否符合开闭原则、扩展点设计
+- **Spring Boot**：分层是否正确、注入方式、事务管理、配置管理
+- **数据库/ORM**：SQL 拼接、N+1 查询、缺少索引、select *
+- **日志**：SLF4J 使用、日志级别、异常堆栈、敏感信息脱敏
 
 ### 3. 报告
 
@@ -83,6 +100,7 @@ description: |
 
 同时也参考 `java-dev-assistant` 的规范：
 - `alibaba-java-manual.md` - 阿里巴巴 Java 开发手册
+- `spring-boot-guide.md` - Spring Boot 开发指南
 - `java-style-guide.md` - 项目代码风格指南
 - `testing-guide.md` - 测试规范（检查测试覆盖率和质量）
 
@@ -106,7 +124,70 @@ description: |
 - 可使用并行流/CompletableFuture 简化同步代码的地方仍使用手动线程管理
 - 异步任务未记录执行日志，难以追踪问题
 
-### 低耦合审查要点
+### Spring Boot 审查要点
+
+**阻塞级 (BLOCKER)**：
+- Controller 中包含业务逻辑（应下沉到 Service）
+- @Transactional 加在 private 方法上（不生效）
+- 使用 @Autowired 字段注入而非构造器注入
+- 事务方法内部同类调用（self-invocation，事务不生效）
+
+**警告级 (WARNING)**：
+- Service 直接返回 Entity 而非 VO/DTO（暴露内部结构）
+- @Transactional 未指定 rollbackFor（默认只回滚 RuntimeException）
+- 使用 @Value 逐个读取配置而非 @ConfigurationProperties
+- RestTemplate 未配置超时和连接池
+
+**建议级 (SUGGESTION)**：
+- 可用 @RequiredArgsConstructor 替代手写构造器
+- 可用 Spring Cache 替代手动缓存管理
+
+### 数据库与 ORM 审查要点
+
+**阻塞级 (BLOCKER)**：
+- SQL 拼接（`"SELECT * FROM " + table + " WHERE id = " + id`）
+- MyBatis 使用 `${}` 而非 `#{}`（SQL 注入）
+- 大表全表扫描（缺少 WHERE 条件或索引）
+
+**警告级 (WARNING)**：
+- N+1 查询（循环内单条查询）
+- 使用 `SELECT *` 而非指定字段
+- 分页查询未做 count=0 判断
+- ArrayList 批量插入（应用批量操作或 MyBatis batch）
+
+**建议级 (SUGGESTION)**：
+- 可用延迟关联优化深分页
+- IN 子句元素过多（> 1000）应分批处理
+
+### 日志审查要点
+
+**阻塞级 (BLOCKER)**：
+- 日志中打印密码、Token、身份证号等敏感信息
+- 直接使用 System.out.println 输出日志
+
+**警告级 (WARNING)**：
+- 使用 Log4j/Logback API 而非 SLF4J
+- 异常日志缺少堆栈信息（`log.error("错误: " + e.getMessage())` 应为 `log.error("错误: {}", param, e)`）
+- debug/trace 日志未用条件判断或占位符
+- 使用 `e.printStackTrace()` 而非日志框架
+
+**建议级 (SUGGESTION)**：
+- 日志级别不恰当（正常业务用 error）
+- 日志缺少上下文信息（如 userId、orderId）
+
+### Virtual Thread (Java 21+) 审查要点
+
+**阻塞级 (BLOCKER)**：
+- 在 Virtual Thread 中使用 synchronized 同步块（会 pin 住载体线程，应改用 ReentrantLock）
+- Virtual Thread 中使用 ThreadLocal 大量存储数据（不回收导致内存泄漏）
+
+**警告级 (WARNING)**：
+- 在 Virtual Thread 中执行 CPU 密集型任务（应使用平台线程池）
+- 混用 Virtual Thread 和传统线程池的同步原语
+
+**建议级 (SUGGESTION)**：
+- 使用 `Executors.newVirtualThreadPerTaskExecutor()` 创建虚拟线程
+- 框架迁移时可先用 `-Djdk.virtualThreadScheduler.parallelism` 调优
 
 **阻塞级 (BLOCKER)**：
 - 上层直接依赖下层具体实现类，而非接口

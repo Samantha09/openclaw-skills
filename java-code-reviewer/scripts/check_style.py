@@ -47,17 +47,21 @@ def check_file(file_path: Path) -> List[Dict]:
                 }
             )
 
-        # 2. 行长度
+        # 2. 行长度（URL、import、长字符串常量例外）
         if len(raw_line) > MAX_LINE_LENGTH:
-            issues.append(
-                {
-                    "file": str(file_path),
-                    "line": idx,
-                    "level": "SUGGESTION",
-                    "category": "格式",
-                    "message": f"行长度 {len(raw_line)} 超过 {MAX_LINE_LENGTH} 字符限制。",
-                }
-            )
+            stripped_lower = stripped.lower()
+            if not (stripped.startswith("import ")
+                    or "http://" in stripped_lower or "https://" in stripped_lower
+                    or stripped.startswith("// http")):
+                issues.append(
+                    {
+                        "file": str(file_path),
+                        "line": idx,
+                        "level": "SUGGESTION",
+                        "category": "格式",
+                        "message": f"行长度 {len(raw_line)} 超过 {MAX_LINE_LENGTH} 字符限制。",
+                    }
+                )
 
         stripped = raw_line.strip()
         if stripped.startswith("//") or stripped.startswith("/*") or stripped.startswith("*"):
@@ -75,7 +79,7 @@ def check_file(file_path: Path) -> List[Dict]:
                 }
             )
 
-        # 4. System.out.print
+        # 4. System.out.print / e.printStackTrace()
         if "System.out.print" in stripped:
             issues.append(
                 {
@@ -86,13 +90,24 @@ def check_file(file_path: Path) -> List[Dict]:
                     "message": "使用 System.out.print 输出，建议改为 SLF4J 日志。",
                 }
             )
+        if "e.printStackTrace()" in stripped or ".printStackTrace()" in stripped:
+            issues.append(
+                {
+                    "file": str(file_path),
+                    "line": idx,
+                    "level": "WARNING",
+                    "category": "规范",
+                    "message": "使用 printStackTrace()，建议改为 log.error(\"描述\", e)。",
+                }
+            )
 
-        # 5. 魔法值（简单规则）
-        # 排除字符串声明（有名字的）、return 语句中的简单布尔/数字
-        magic_match = re.search(r"=\s*([\"'][^\"']{3,}[\"']|\d{3,})\s*;", stripped)
-        if magic_match and not stripped.startswith("final ") and not stripped.startswith("private final"):
-            # 放宽：带明显语义的关键字不算
-            if not any(kw in stripped for kw in ["message", "msg", "desc", "name", "key", "error"]):
+        # 5. 魔法值（改进规则）
+        # 排除：final 声明、return 中的简单值、log 语句、assert 语句
+        if not (stripped.startswith("final ") or stripped.startswith("private final")
+                or stripped.startswith("log.") or stripped.startswith("assert ")
+                or stripped.startswith("return ")):
+            magic_match = re.search(r"=\s*([\"'][^\"']{3,}[\"']|\d{3,})\s*;", stripped)
+            if magic_match:
                 issues.append(
                     {
                         "file": str(file_path),

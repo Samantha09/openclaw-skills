@@ -129,7 +129,7 @@ def generate_test_class(class_info, test_cases):
     
     # 类声明
     lines.extend([
-        f"class {class_name}Test {{",
+        f"public class {class_name}Test {{",
         "",
         f"    private {class_name} target;",
         "",

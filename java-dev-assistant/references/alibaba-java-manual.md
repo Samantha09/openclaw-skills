@@ -23,6 +23,22 @@
 - 异常类命名使用 Exception 结尾
 - 测试类命名以它要测试的类的名称开始，以 Test 结尾
 
+**示例**:
+
+```java
+// 正确
+public class UserServiceImpl implements UserService { }
+public abstract class AbstractBaseDAO { }
+public class UserNotFoundException extends RuntimeException { }
+private static final int MAX_RETRY_COUNT = 3;
+
+// 错误
+public class userService { }                    // 类名不是 UpperCamelCase
+public class AbstractbaseDao { }                // Base 后首字母未大写
+private static final int maxRetryCount = 3;     // 常量不是 UPPER_SNAKE_CASE
+int a, b, c;                                    // 禁止单字符命名（临时变量除外）
+```
+
 ### 1.2 常量定义
 
 - 不允许使用魔法值（即未经预先定义的常量）直接出现在代码中
@@ -73,6 +89,48 @@
 - 对多个资源、数据库表、对象同时加锁时，需要保持一致的加锁顺序
 - 并发修改同一记录时，避免更新丢失，需要加锁
 - 如果线程访问的是无锁的，那么使用乐观锁；如果访问的是有锁的，那么使用悲观锁
+
+**示例**:
+
+```java
+// 错误：使用 Executors 创建线程池（无界队列可能导致 OOM）
+ExecutorService pool = Executors.newFixedThreadPool(10);
+
+// 正确：通过 ThreadPoolExecutor 显式指定参数
+ThreadFactory namedFactory = r -> {
+    Thread t = new Thread(r);
+    t.setName("order-process-" + t.getId());
+    return t;
+};
+ExecutorService pool = new ThreadPoolExecutor(
+    4, 8, 60L, TimeUnit.SECONDS,
+    new ArrayBlockingQueue<>(100),        // 有界队列
+    namedFactory,
+    new ThreadPoolExecutor.CallerRunsPolicy()
+);
+
+// 错误：SimpleDateFormat 线程不安全
+private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
+
+// 正确：使用 DateTimeFormatter（线程安全）
+private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+// 错误：双检锁未用 volatile
+private static Singleton instance;
+public static Singleton getInstance() {
+    if (instance == null) {
+        synchronized (Singleton.class) {
+            if (instance == null) {
+                instance = new Singleton();  // 可能读到半初始化对象
+            }
+        }
+    }
+    return instance;
+}
+
+// 正确：加 volatile 防止指令重排序
+private static volatile Singleton instance;
+```
 
 ### 1.7 控制语句
 

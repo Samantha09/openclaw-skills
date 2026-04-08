@@ -174,6 +174,82 @@ try (InputStream is = new FileInputStream(file)) {
 
 ---
 
+## 7. Stream API 陷阱
+
+### 7.1 Collectors.toList() 返回不可变列表
+```java
+// 坏：Java 10 之前 toList() 返回的列表可能不可修改
+List<String> result = stream.toList();  // Java 16+
+result.add("new");  // UnsupportedOperationException
+
+// 好：如果需要修改
+List<String> result = stream.collect(Collectors.toCollection(ArrayList::new));
+```
+
+### 7.2 peek 的副作用
+```java
+// 坏：peek 用于修改状态，语义不明确
+list.stream().peek(x -> x.setProcessed(true)).collect(Collectors.toList());
+
+// 好：使用 map 或 forEach
+list.forEach(x -> x.setProcessed(true));
+```
+
+### 7.3 并行流的线程安全
+```java
+// 坏：并行流中修改共享集合
+List<String> result = new ArrayList<>();
+list.parallelStream().forEach(item -> result.add(transform(item)));  // 线程不安全
+
+// 好：使用线程安全的 collect
+List<String> result = list.parallelStream()
+    .map(this::transform)
+    .collect(Collectors.toList());
+```
+
+### 7.4 自动装箱陷阱
+```java
+// 坏：reduce 的初始值用 Integer，大量自动装箱
+int sum = list.stream().reduce(0, Integer::sum);  // 自动装箱
+
+// 好：使用原始类型流
+int sum = list.stream().mapToInt(Integer::intValue).sum();
+```
+
+---
+
+## 8. Optional 误用
+
+### 8.1 Optional 做方法参数
+```java
+// 坏：Optional 做参数增加调用复杂度
+public void process(Optional<String> input) { ... }
+
+// 好：方法重载或 nullable 参数
+public void process(@Nullable String input) { ... }
+```
+
+### 8.2 Optional 嵌套
+```java
+// 坏：嵌套 Optional
+Optional<Optional<String>> nested = Optional.of(Optional.of("value"));
+
+// 好：使用 flatMap
+Optional<String> result = outerOptional.flatMap(inner -> inner);
+```
+
+### 8.3 Optional.get 不检查
+```java
+// 坏：直接 get 可能抛 NoSuchElementException
+String value = optional.get();
+
+// 好：提供默认值或异常
+String value = optional.orElse("");
+String value = optional.orElseThrow(() -> new BusinessException("NOT_FOUND", "值不存在"));
+```
+
+---
+
 ## 6. 性能反模式
 
 ### 6.1 循环内字符串拼接

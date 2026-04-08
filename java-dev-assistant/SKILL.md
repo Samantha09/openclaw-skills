@@ -27,7 +27,18 @@ description: |
    - 生成覆盖修改逻辑的单元测试
    - 记录测试场景和边界情况
 
-4. **文档记录**
+4. **Spring Boot 开发**
+   - Controller / Service / Repository 分层开发
+   - 依赖注入与 Bean 生命周期管理
+   - 配置管理（application.yml、@ConfigurationProperties）
+   - Spring Boot Test 测试实践
+
+5. **异常处理**
+   - 自定义业务异常体系设计
+   - 全局异常处理（@ControllerAdvice）
+   - 异常链保留与错误码规范
+
+6. **文档记录**
    - 以结构化格式记录变更
    - 文档化影响范围和迁移说明
 
@@ -47,7 +58,87 @@ description: |
 - 确保类型安全
 - 处理边界情况
 
-### 3. 提交生成
+### 3. 异常处理
+
+设计异常体系时遵循以下原则：
+
+```java
+// 1. 自定义业务异常（携带错误码）
+public class BusinessException extends RuntimeException {
+    private final String errorCode;
+    public BusinessException(String errorCode, String message) {
+        super(message);
+        this.errorCode = errorCode;
+    }
+    public BusinessException(String errorCode, String message, Throwable cause) {
+        super(message, cause);  // 保留异常链
+        this.errorCode = errorCode;
+    }
+}
+
+// 2. 全局异常处理
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusiness(BusinessException e) {
+        log.warn("业务异常: code={}, msg={}", e.getErrorCode(), e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(new ErrorResponse(e.getErrorCode(), e.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnexpected(Exception e) {
+        log.error("未预期异常", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(new ErrorResponse("INTERNAL_ERROR", "服务异常"));
+    }
+}
+```
+
+- 业务异常继承 `RuntimeException`，携带错误码
+- 异常链必须保留（`new Xxx("msg", cause)`）
+- 不要用异常做流程控制
+- 不要捕获 `Throwable` 或吞掉异常
+- 对外返回统一错误码，内部日志记录完整堆栈
+
+### 4. Spring Boot 开发
+
+分层架构与依赖注入：
+
+```java
+// Controller — 参数校验、转发
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+    private final UserService userService;  // 构造器注入
+
+    @PostMapping
+    public ResponseEntity<UserVO> create(@Valid @RequestBody UserCreateRequest request) {
+        return ResponseEntity.ok(userService.create(request));
+    }
+}
+
+// Service — 业务逻辑
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
+    private final UserRepository userRepository;
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public UserVO create(UserCreateRequest request) {
+        // 业务逻辑
+    }
+}
+```
+
+- 使用构造器注入（`@RequiredArgsConstructor`），不用 `@Autowired` 字段注入
+- Controller 只做参数校验和转发，不写业务逻辑
+- `@Transactional` 加在 Service 方法上，指定 `rollbackFor`
+- 配置使用 `@ConfigurationProperties` 而非 `@Value`
+
+### 5. 测试
 
 使用规范提交格式：
 ```
@@ -58,16 +149,16 @@ description: |
 <页脚>
 ```
 
-类型：`feat`（新功能）、`fix`（修复）、`docs`（文档）、`style`（格式）、`refactor`（重构）、`test`（测试）、`chore`（杂项）
+类型：`feat`（新功能）、`fix`（修复）、`docs`（文档）、`style`（格式）、`refactor`（重构）、`perf`（性能）、`test`（测试）、`chore`（杂项）
 
-### 4. 测试生成
+### 6. 测试生成
 
 对于每个变更：
 - 识别受影响的方法/类
 - 生成单元测试
 - 覆盖正常情况、边界情况和错误场景
 
-### 5. 文档记录
+### 7. 文档记录
 
 创建变更日志条目，包含：
 - 变更摘要
@@ -87,6 +178,7 @@ description: |
 
 查看 `references/` 目录：
 - `alibaba-java-manual.md` - **阿里巴巴 Java 开发手册（嵩山版）** - 命名规范、编码规约、异常处理、并发、数据库等
+- `spring-boot-guide.md` - **Spring Boot 开发指南** - 分层架构、依赖注入、配置管理、事务处理
 - `commit-convention.md` - 提交信息格式详情
 - `testing-guide.md` - 测试最佳实践
 - `java-style-guide.md` - 项目代码规范

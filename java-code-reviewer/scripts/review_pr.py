@@ -82,7 +82,7 @@ def scan_common_issues(file_path, diff_text):
                         }
                     )
 
-            # System.out.print 检查
+            # System.out.print / e.printStackTrace() 检查
             if "System.out.print" in content:
                 issues.append(
                     {
@@ -91,6 +91,16 @@ def scan_common_issues(file_path, diff_text):
                         "level": "WARNING",
                         "category": "规范",
                         "message": "使用 System.out.print 输出日志，建议改用 SLF4J。",
+                    }
+                )
+            if "e.printStackTrace()" in content:
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": line_no,
+                        "level": "WARNING",
+                        "category": "规范",
+                        "message": "使用 e.printStackTrace()，建议改用 log.error(\"描述\", e)。",
                     }
                 )
 
@@ -105,6 +115,63 @@ def scan_common_issues(file_path, diff_text):
                         "message": "捕获过于宽泛的异常（Exception/Throwable），建议捕获具体异常类型。",
                     }
                 )
+
+            # new Thread() 直接创建线程
+            if re.search(r"new\s+Thread\s*\(", content):
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": line_no,
+                        "level": "BLOCKER",
+                        "category": "并发",
+                        "message": "直接创建线程，应通过线程池（ThreadPoolExecutor）管理线程资源。",
+                    }
+                )
+
+            # Executors.newXxx() 创建线程池
+            if re.search(r"Executors\.(newFixedThreadPool|newCachedThreadPool|newSingleThreadExecutor|newScheduledThreadPool)", content):
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": line_no,
+                        "level": "BLOCKER",
+                        "category": "并发",
+                        "message": "使用 Executors 创建线程池（无界队列可能导致 OOM），应通过 ThreadPoolExecutor 显式创建。",
+                    }
+                )
+
+            # == 比较对象而非 .equals
+            if re.search(r'!=\s*null\s*&&\s*\w+\s*==\s*\w+', content) or re.search(r'if\s*\(\s*\w+\s*==\s*"[^"]*"', content):
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": line_no,
+                        "level": "WARNING",
+                        "category": "正确性",
+                        "message": "使用 == 比较对象引用而非值，应使用 .equals() 或 Objects.equals()。",
+                    }
+                )
+
+            # 硬编码密码/密钥关键词
+            sensitive_patterns = [
+                (r'password\s*=\s*"[^"]+"', "密码"),
+                (r'secret\s*=\s*"[^"]+"', "密钥"),
+                (r'apiKey\s*=\s*"[^"]+"', "API Key"),
+                (r'privateKey\s*=\s*"[^"]+"', "私钥"),
+                (r'token\s*=\s*"[^"]+"', "Token"),
+            ]
+            for pattern, label in sensitive_patterns:
+                if re.search(pattern, content, re.IGNORECASE) and "config" not in content.lower() and "env" not in content.lower():
+                    issues.append(
+                        {
+                            "file": file_path,
+                            "line": line_no,
+                            "level": "BLOCKER",
+                            "category": "安全",
+                            "message": f"疑似硬编码{label}，应使用配置中心或环境变量管理。",
+                        }
+                    )
+                    break  # 每行只报一次
 
             line_no += 1
         elif line.startswith(" ") and not line.startswith("   "):
