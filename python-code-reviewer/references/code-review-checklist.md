@@ -18,6 +18,8 @@
 - [ ] 返回值类型注解准确
 - [ ] None 使用 `X | None` 而非 `Optional[X]`（3.10+）
 - [ ] 泛型填入了类型参数（`dict[str, int]` 而非 `dict`）
+- [ ] 未混用新旧类型注解（如同时出现 `Optional[X]` 和 `X | None`）
+- [ ] 未混用 `typing.List/Dict` 和 `list/dict`（3.9+ 应统一用内置）
 
 ## 正确性
 
@@ -36,6 +38,9 @@
 - [ ] 共享状态有同步保护
 - [ ] Semaphore / Lock 正确使用
 - [ ] asyncio.gather 处理了异常
+- [ ] aiohttp session 未在循环中反复创建/销毁（应复用）
+- [ ] HTTP 客户端有超时控制（aiohttp.ClientTimeout）
+- [ ] SSE/流式响应正确处理 content-type 差异
 
 ## 安全
 

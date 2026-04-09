@@ -124,6 +124,9 @@ description: |
 - 后台任务未保存引用，可能被垃圾回收
 - 使用 `asyncio.ensure_future` 而非 `asyncio.create_task`（3.7+）
 - 长时间运行的协程没有超时控制
+- aiohttp ClientSession 在循环中反复创建/销毁（应复用或传入）
+- HTTP 请求缺少超时控制
+- 响应解析未处理 content-type 差异（如期望 JSON 但返回 SSE）
 
 **建议级 (SUGGESTION)**：
 - 可用 `asyncio.timeout`（3.11+）替代手动超时管理
