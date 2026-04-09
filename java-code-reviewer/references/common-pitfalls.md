@@ -112,6 +112,92 @@ private static Singleton instance;
 private static volatile Singleton instance;
 ```
 
+### 3.4 Timer vs ScheduledExecutorService
+```java
+// 坏：Timer 中一个任务抛异常，其他任务全部终止
+Timer timer = new Timer();
+timer.schedule(task1, 0, 1000);
+timer.schedule(task2, 0, 2000); // task1 异常会导致 task2 也终止
+
+// 好：使用 ScheduledExecutorService
+ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+scheduler.scheduleAtFixedRate(task1, 0, 1, TimeUnit.SECONDS);
+scheduler.scheduleAtFixedRate(task2, 0, 2, TimeUnit.SECONDS);
+```
+
+### 3.5 Random 实例被多线程共享
+```java
+// 坏：多线程竞争同一 seed 导致性能下降
+private static final Random RANDOM = new Random();
+
+// 好：JDK7+ 使用 ThreadLocalRandom
+int value = ThreadLocalRandom.current().nextInt(100);
+```
+
+### 3.6 HashMap 高并发 resize 死链
+```java
+// 坏：多线程同时 resize 可能形成环形链表，导致 CPU 飙升
+new HashMap<>(); // 多线程并发 put
+
+// 好：使用 ConcurrentHashMap
+ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
+```
+
+### 3.7 volatile 不能解决多写线程安全
+```java
+// 坏：volatile 只保证可见性，不保证原子性
+private static volatile int count = 0;
+count++; // 非原子操作
+
+// 好：使用 AtomicInteger 或 LongAdder
+private static final AtomicInteger count = new AtomicInteger();
+count.incrementAndGet();
+// JDK8 推荐 LongAdder（比 AtomicLong 性能更好）
+LongAdder adder = new LongAdder();
+adder.increment();
+```
+
+### 3.8 CountDownLatch 子线程异常导致主线程超时
+```java
+// 坏：子线程异常后 countDown 未执行，主线程一直 await
+executor.submit(() -> {
+    doSomething(); // 可能抛异常
+    latch.countDown(); // 异常后不会执行
+});
+
+// 好：在 finally 中 countDown
+executor.submit(() -> {
+    try {
+        doSomething();
+    } catch (Exception e) {
+        log.error("任务执行失败", e);
+    } finally {
+        latch.countDown();
+    }
+});
+```
+
+### 3.9 ThreadLocal 未清理（线程池场景）
+```java
+// 坏：线程池中线程复用，ThreadLocal 值残留
+executor.submit(() -> {
+    threadLocal.set(value);
+    doSomething();
+    // 未清理，下次任务会读到脏数据
+});
+
+// 好：使用后清理
+executor.submit(() -> {
+    try {
+        threadLocal.set(value);
+        doSomething();
+    } finally {
+        threadLocal.remove();
+    }
+});
+// 注意：ThreadLocal 变量建议使用 static 修饰
+```
+
 ---
 
 ## 4. 异常处理
