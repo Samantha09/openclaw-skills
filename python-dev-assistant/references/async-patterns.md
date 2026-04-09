@@ -196,3 +196,74 @@ funcs = [lambda: i for i in range(5)]
 # 正确
 funcs = [lambda i=i: i for i in range(5)]
 ```
+
+## aiohttp 客户端模式
+
+### 反模式：每次请求创建新 session
+
+```python
+# 错误！每次调用都创建/销毁 session，开销大
+async def fetch(url: str) -> str:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            return await resp.text()
+```
+
+### 推荐：复用 session
+
+```python
+class ApiClient:
+    """复用 aiohttp session 的 API 客户端."""
+
+    def __init__(self, base_url: str, timeout: int = 120):
+        self.base_url = base_url
+        self.timeout = timeout
+        self._session: aiohttp.ClientSession | None = None
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        if self._session is None or self._session.closed:
+            self._session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+            )
+        return self._session
+
+    async def close(self):
+        if self._session and not self._session.closed:
+            await self._session.close()
+
+    async def fetch(self, path: str) -> dict:
+        session = await self._get_session()
+        async with session.post(f"{self.base_url}{path}", ...) as resp:
+            return await resp.json()
+```
+
+### 批量请求的并发控制
+
+```python
+async def fetch_all(urls: list[str], max_concurrent: int = 10) -> list[str]:
+    semaphore = asyncio.Semaphore(max_concurrent)
+
+    async def limited_fetch(url: str) -> str:
+        async with semaphore:
+            return await fetch(url)
+
+    return await asyncio.gather(
+        *[limited_fetch(url) for url in urls],
+        return_exceptions=True,
+    )
+```
+
+## 测试中的 sys.path 处理
+
+当测试文件在子目录（如 `tests/`）下，直接运行时需要将项目根目录加入路径：
+
+```python
+# tests/test_xxx.py
+import os
+import sys
+
+if __name__ == "__main__":
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+```
+
+这样既支持 `python tests/test_xxx.py` 直接运行，也支持 `pytest tests/test_xxx.py`。
